@@ -2,6 +2,12 @@
 
 namespace Prelude;
 
+function pipe(callable $callable1, callable $callable2) {
+  return function() use ($callable2, $callable1) { 
+    return $callable1(call_user_func_array($callable2, func_get_args()));
+  };
+}
+
 function map(callable $callable, $array) {
   return array_map($callable, $array);
 }
@@ -58,32 +64,42 @@ function pluck($index, $array) {
   return array_map($array, function($item) use ($index) { return $item[$index]; };
 }
 
-function partial_left(callable $callable, $param) {
-  return function () use($callable, $param) {
+function partial_left($param, callable $callable) {
+  return function () use($param, $callable) {
     return call_user_func_array($callable, array_merge([$param], func_get_args());
   };
 }
 
-function partial_right(callable $callable, $param) {
-  return function () use($callable, $param) {
+function partial_right($param, callable $callable) {
+  return function () use($param, $callable) {
     return call_user_func_array($callable, array_merge(func_get_args(), [$param]);
   };
 }
 
 function take($size, $array) {
-  array_slice($array, 0, $size);
+  return array_slice($array, 0, $size);
 }
 
-function drop() {
-  array_slice($array, $size);
+function drop($size, $array) {
+  return array_slice($array, $size);
+}
+
+function not($item) {
+  return ! $item
+}
+
+function null($item) {
+  return empty($item)
 }
 
 function zip() {
-  
-}
-
-function unzip() {
-
+  $zipped = [];
+  $matrix = map(partial_left('take' max(map('length', func_get_args()))), func_get_args());
+  while(!all('null', $matrix)) {
+    $zipped[] = map('head', filter(pipe('not', 'null'), $matrix));
+    $matrix = map('tail', $matrix);
+  }
+  return $zipped;
 }
 
 function chars($chars) {
