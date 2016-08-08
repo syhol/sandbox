@@ -2,12 +2,6 @@
 
 namespace Prelude;
 
-function pipe(callable $callable1, callable $callable2) {
-  return function() use ($callable2, $callable1) { 
-    return $callable1(call_user_func_array($callable2, func_get_args()));
-  };
-}
-
 function map(callable $callable, $array) {
   return array_map($callable, $array);
 }
@@ -20,12 +14,12 @@ function head($array) {
   return array_slice($array, 0, 1);
 }
 
-function tail($array) {
-  return array_slice($array, 1);
-}
-
 function last($array) {
   return array_slice($array, count($array) - 2, 1);
+}
+
+function tail($array) {
+  return array_slice($array, 1);
 }
 
 function init($array) {
@@ -48,6 +42,14 @@ function all(callable $callable, $array) {
   return count(array_filter($array, $callable)) === count($array);
 }
 
+function not($item) {
+  return ! $item
+}
+
+function null($item) {
+  return empty($item)
+}
+
 function id($item) {
   return $item;
 }
@@ -64,6 +66,14 @@ function pluck($index, $array) {
   return array_map($array, function($item) use ($index) { return $item[$index]; };
 }
 
+function take($size, $array) {
+  return array_slice($array, 0, $size);
+}
+
+function drop($size, $array) {
+  return array_slice($array, $size);
+}
+
 function partial_left($param, callable $callable) {
   return function () use($param, $callable) {
     return call_user_func_array($callable, array_merge([$param], func_get_args());
@@ -76,20 +86,10 @@ function partial_right($param, callable $callable) {
   };
 }
 
-function take($size, $array) {
-  return array_slice($array, 0, $size);
-}
-
-function drop($size, $array) {
-  return array_slice($array, $size);
-}
-
-function not($item) {
-  return ! $item
-}
-
-function null($item) {
-  return empty($item)
+function partial_at($index, $param, callable $callable) {
+  return function () use($index, $param, $callable) {
+    return call_user_func_array($callable, array_merge(func_get_args(), [$param]);
+  };
 }
 
 function zip() {
@@ -124,4 +124,24 @@ function lines($lines) {
 
 function unlines($lines) {
   return implode(PHP_EOL, $lines);
+}
+
+// PHP Specials
+
+function splat(callable $callable) {
+  return function($params) use ($callable) {
+    return call_user_func_array($callable, $params);
+  };
+}
+
+function unsplat(callable $callable) {
+  return function() use ($callable) {
+    return call_user_func($callable, func_get_args());
+  };
+}
+
+function pipe(callable $callable1, callable $callable2) {
+  return function() use ($callable2, $callable1) { 
+    return $callable1(call_user_func_array($callable2, func_get_args()));
+  };
 }
