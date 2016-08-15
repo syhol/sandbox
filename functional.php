@@ -408,3 +408,208 @@ interface Foldable extends \Countable
     public function product();
     public function toArray();
 }
+
+abstract class Maybe implements Monad, Comonad
+{
+    public function pure($value)
+    {
+        return new Just($value);
+    }
+
+    public function extend(callable $callable)
+    {
+        return $this->pure(call_user_func($callable, $this));
+    }
+
+    public function duplicate()
+    {
+        return $this->pure($this);
+    }
+
+    static public function just($value)
+    {
+        return new Just($value);
+    }
+
+    static public function nothing()
+    {
+        return new Nothing();
+    }
+}
+
+class Just extends Maybe
+{
+    /**
+     * @var mixed
+     */
+    private $value;
+
+    /**
+     * Just constructor.
+     * @param mixed $value
+     */
+    public function __construct($value)
+    {
+        $this->value = $value;
+    }
+
+    public function map(callable $callable)
+    {
+        return new Just(call_user_func($callable, $this->value));
+    }
+
+    public function apply(Functor $callable)
+    {
+        return $callable->map(function($function) {
+            return call_user_func($function, $this->value);
+        });
+    }
+
+    public function bind(callable $callable)
+    {
+        return call_user_func($callable, $this->value);
+    }
+
+    public function extract()
+    {
+        return $this->value;
+    }
+}
+
+class Nothing extends Maybe
+{
+    public function map(callable $callable)
+    {
+        return new Nothing();
+    }
+
+    public function apply(Functor $callable)
+    {
+        return new Nothing();
+    }
+
+    public function bind(callable $callable)
+    {
+        return new Nothing();
+    }
+
+    public function extract()
+    {
+        return null;
+    }
+}
+
+class Collection implements Monad, Monoid, Foldable
+{
+    /**
+     * @var array
+     */
+    private $values;
+
+    /**
+     * Just constructor.
+     * @param array $values
+     */
+    public function __construct(array $values)
+    {
+        $this->values = $values;
+    }
+
+    public function pure($value)
+    {
+        return new Collection($value);
+    }
+
+    public function map(callable $callable)
+    {
+        return $this->pure(array_map($callable, $this->values));
+    }
+
+    public function apply(Functor $callable)
+    {
+        return $callable->map(function($function) {
+            return array_map($function, $this->values);
+        });
+    }
+
+    public function bind(callable $callable)
+    {
+        return array_map($callable, $this->values);
+    }
+
+    public function emptyValue()
+    {
+        return $this->pure([]);
+    }
+
+    public function append($value)
+    {
+        return $this->pure(array_merge([$value], $this->values));
+    }
+
+    public function concat($value)
+    {
+        return $this->pure(array_merge($value, $this->values));
+    }
+
+    public function count()
+    {
+        return count($this->values);
+    }
+
+    public function fold()
+    {
+        return $this->foldMap(function ($a) { return $a; });
+    }
+
+    public function foldMap(callable $callable)
+    {
+        $appender = function ($a, $b) { return $a->append($b); };
+        return $this->map($callable)->foldl($appender, $this->emptyValue());
+    }
+
+    public function foldr(callable $callable, $initial)
+    {
+        return array_reduce($this->values, $callable, $initial);
+    }
+
+    public function foldl(callable $callable, $initial)
+    {
+        return array_reduce($this->values, flip($callable), $initial);
+    }
+
+    public function null()
+    {
+        return empty($this->values);
+    }
+
+    public function elem($element)
+    {
+        return in_array($element, $this->values);
+    }
+
+    public function maximum()
+    {
+        return max($this->values);
+    }
+
+    public function minimum()
+    {
+        return min($this->values);
+    }
+
+    public function sum()
+    {
+        return array_sum($this->values);
+    }
+
+    public function product()
+    {
+        return array_product($this->values);
+    }
+
+    public function toArray()
+    {
+        return $this->values;
+    }
+}
