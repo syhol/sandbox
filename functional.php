@@ -280,7 +280,13 @@ function partial(callable $callable, ...$params) {
     };
 }
 
-function apply(callable $callable, ...$params) {
+function apply(...$params) {
+    return function ($callable) use ($params) {
+        return $callable(...$params);
+    }
+}
+
+function call(callable $callable, ...$params) {
     return $callable(...$params);
 }
 
