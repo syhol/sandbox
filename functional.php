@@ -394,6 +394,13 @@ interface Monad extends Applicative
     public function bind(callable $callable);
 }
 
+interface Comonad extends Applicative
+{
+    public function duplicate();
+    public function extend(callable $callable);
+    public function extract();
+}
+
 interface Foldable extends \Countable
 {
     public function fold();
